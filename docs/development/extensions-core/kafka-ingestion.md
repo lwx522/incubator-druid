@@ -26,12 +26,11 @@ sidebar_label: "Apache Kafka"
 
 The Kafka indexing service enables the configuration of *supervisors* on the Overlord, which facilitate ingestion from
 Kafka by managing the creation and lifetime of Kafka indexing tasks. These indexing tasks read events using Kafka's own
-partition and offset mechanism and are therefore able to provide guarantees of exactly-once ingestion. They are also
-able to read non-recent events from Kafka and are not subject to the window period considerations imposed on other
-ingestion mechanisms using Tranquility. The supervisor oversees the state of the indexing tasks to coordinate handoffs,
+partition and offset mechanism and are therefore able to provide guarantees of exactly-once ingestion.
+The supervisor oversees the state of the indexing tasks to coordinate handoffs,
 manage failures, and ensure that the scalability and replication requirements are maintained.
 
-This service is provided in the `druid-kafka-indexing-service` core Apache Druid (incubating) extension (see
+This service is provided in the `druid-kafka-indexing-service` core Apache Druid extension (see
 [Including Extensions](../../development/extensions.md#loading-extensions)).
 
 > The Kafka indexing service supports transactional topics which were introduced in Kafka 0.11.x. These changes make the
@@ -206,7 +205,8 @@ For Roaring bitmaps:
 |`period`|ISO8601 Period|How often the supervisor will execute its management logic. Note that the supervisor will also run in response to certain events (such as tasks succeeding, failing, and reaching their taskDuration) so this value specifies the maximum time between iterations.|no (default == PT30S)|
 |`useEarliestOffset`|Boolean|If a supervisor is managing a dataSource for the first time, it will obtain a set of starting offsets from Kafka. This flag determines whether it retrieves the earliest or latest offsets in Kafka. Under normal circumstances, subsequent tasks will start from where the previous segments ended so this flag will only be used on first run.|no (default == false)|
 |`completionTimeout`|ISO8601 Period|The length of time to wait before declaring a publishing task as failed and terminating it. If this is set too low, your tasks may never publish. The publishing clock for a task begins roughly after `taskDuration` elapses.|no (default == PT30M)|
-|`lateMessageRejectionPeriod`|ISO8601 Period|Configure tasks to reject messages with timestamps earlier than this period before the task was created; for example if this is set to `PT1H` and the supervisor creates a task at *2016-01-01T12:00Z*, messages with timestamps earlier than *2016-01-01T11:00Z* will be dropped. This may help prevent concurrency issues if your data stream has late messages and you have multiple pipelines that need to operate on the same segments (e.g. a realtime and a nightly batch ingestion pipeline).|no (default == none)|
+|`lateMessageRejectionStartDateTime`|ISO8601 DateTime|Configure tasks to reject messages with timestamps earlier than this date time; for example if this is set to `2016-01-01T11:00Z` and the supervisor creates a task at *2016-01-01T12:00Z*, messages with timestamps earlier than *2016-01-01T11:00Z* will be dropped. This may help prevent concurrency issues if your data stream has late messages and you have multiple pipelines that need to operate on the same segments (e.g. a realtime and a nightly batch ingestion pipeline).|no (default == none)|
+|`lateMessageRejectionPeriod`|ISO8601 Period|Configure tasks to reject messages with timestamps earlier than this period before the task was created; for example if this is set to `PT1H` and the supervisor creates a task at *2016-01-01T12:00Z*, messages with timestamps earlier than *2016-01-01T11:00Z* will be dropped. This may help prevent concurrency issues if your data stream has late messages and you have multiple pipelines that need to operate on the same segments (e.g. a realtime and a nightly batch ingestion pipeline). Please note that only one of `lateMessageRejectionPeriod` or `lateMessageRejectionStartDateTime` can be specified.|no (default == none)|
 |`earlyMessageRejectionPeriod`|ISO8601 Period|Configure tasks to reject messages with timestamps later than this period after the task reached its taskDuration; for example if this is set to `PT1H`, the taskDuration is set to `PT1H` and the supervisor creates a task at *2016-01-01T12:00Z*, messages with timestamps later than *2016-01-01T14:00Z* will be dropped. **Note:** Tasks sometimes run past their task duration, for example, in cases of supervisor failover. Setting earlyMessageRejectionPeriod too low may cause messages to be dropped unexpectedly whenever a task runs past its originally configured task duration.|no (default == none)|
 
 ## Operations
@@ -399,4 +399,4 @@ events for the interval 13:00 - 14:00 may be split across previous and new set o
 one can schedule re-indexing tasks be run to merge segments together into new segments of an ideal size (in the range of ~500-700 MB per segment).
 Details on how to optimize the segment size can be found on [Segment size optimization](../../operations/segment-optimization.md).
 There is also ongoing work to support automatic segment compaction of sharded segments as well as compaction not requiring
-Hadoop (see [here](https://github.com/apache/incubator-druid/pull/5102)).
+Hadoop (see [here](https://github.com/apache/druid/pull/5102)).

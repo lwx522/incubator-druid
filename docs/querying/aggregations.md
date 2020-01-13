@@ -23,7 +23,7 @@ title: "Aggregations"
   -->
 
 
-Aggregations can be provided at ingestion time as part of the ingestion spec as a way of summarizing data before it enters Apache Druid (incubating).
+Aggregations can be provided at ingestion time as part of the ingestion spec as a way of summarizing data before it enters Apache Druid.
 Aggregations can also be specified as part of many queries at query time.
 
 Available aggregations are:
@@ -118,6 +118,14 @@ Computes and stores the sum of values as 32-bit floating point value. Similar to
 
 ```json
 { "type" : "longMax", "name" : <output_name>, "fieldName" : <metric_name> }
+```
+
+### `doubleMean` aggregator
+
+Computes and returns arithmetic mean of a column values as 64 bit float value. This is a query time aggregator only and should not be used during indexing.
+
+```json
+{ "type" : "doubleMean", "name" : <output_name>, "fieldName" : <metric_name> }
 ```
 
 ### First / Last aggregator

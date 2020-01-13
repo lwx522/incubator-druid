@@ -23,7 +23,7 @@ title: "Protobuf"
   -->
 
 
-This Apache Druid (incubating) extension enables Druid to ingest and understand the Protobuf data format. Make sure to [include](../../development/extensions.md#loading-extensions) `druid-protobuf-extensions` as an extension.
+This Apache Druid extension enables Druid to ingest and understand the Protobuf data format. Make sure to [include](../../development/extensions.md#loading-extensions) `druid-protobuf-extensions` as an extension.
 
 ## Protobuf Parser
 
@@ -41,7 +41,7 @@ This example demonstrates how to load Protobuf messages from Kafka.  Please read
 
 Files used in this example are found at `./examples/quickstart/protobuf` in your Druid directory.
 
-- We will use [Kafka Indexing Service](./kafka-ingestion.md) instead of Tranquility.
+- We will use [Kafka Indexing Service](./kafka-ingestion.md).
 - Kafka broker host is `localhost:9092`.
 - Kafka topic is `metrics_pb` instead of `metrics`.
 - datasource name is `metrics-kafka-pb` instead of `metrics-kafka` to avoid the confusion.

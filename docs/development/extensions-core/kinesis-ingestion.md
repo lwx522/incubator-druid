@@ -26,12 +26,11 @@ sidebar_label: "Amazon Kinesis"
 
 Similar to the [Kafka indexing service](./kafka-ingestion.md), the Kinesis indexing service enables the configuration of *supervisors* on the Overlord, which facilitate ingestion from
 Kinesis by managing the creation and lifetime of Kinesis indexing tasks. These indexing tasks read events using Kinesis's own
-Shards and Sequence Number mechanism and are therefore able to provide guarantees of exactly-once ingestion. They are also
-able to read non-recent events from Kinesis and are not subject to the window period considerations imposed on other
-ingestion mechanisms using Tranquility. The supervisor oversees the state of the indexing tasks to coordinate handoffs, manage failures,
+Shards and Sequence Number mechanism and are therefore able to provide guarantees of exactly-once ingestion.
+The supervisor oversees the state of the indexing tasks to coordinate handoffs, manage failures,
 and ensure that the scalability and replication requirements are maintained.
 
-The Kinesis indexing service is provided as the `druid-kinesis-indexing-service` core Apache Druid (incubating) extension (see
+The Kinesis indexing service is provided as the `druid-kinesis-indexing-service` core Apache Druid extension (see
 [Including Extensions](../../development/extensions.md#loading-extensions)). Please note that this is
 currently designated as an *experimental feature* and is subject to the usual
 [experimental caveats](../experimental.md).
@@ -157,8 +156,9 @@ The tuningConfig is optional and default parameters will be used if no tuningCon
 | `intermediateHandoffPeriod`           | ISO8601 Period | How often the tasks should hand off segments. Handoff will happen either if `maxRowsPerSegment` or `maxTotalRows` is hit or every `intermediateHandoffPeriod`, whichever happens earlier.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | no (default == P2147483647D)                                                                                 |
 | `logParseExceptions`                  | Boolean        | If true, log an error message when a parsing exception occurs, containing information about the row where the error occurred.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | no, default == false                                                                                         |
 | `maxParseExceptions`                  | Integer        | The maximum number of parse exceptions that can occur before the task halts ingestion and fails. Overridden if `reportParseExceptions` is set.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | no, unlimited default                                                                                        |
-| `maxSavedParseExceptions`             | Integer        | When a parse exception occurs, Druid can keep track of the most recent parse exceptions. "maxSavedParseExceptions" limits how many exception instances will be saved. These saved exceptions will be made available after the task finishes in the [task completion report](../../ingestion/tasks.md#reports). Overridden if `reportParseExceptions` is set.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | no, default == 0                                                                                             |
-| `maxRecordsPerPoll`                   | Integer        | The maximum number of records/events to be fetched from buffer per poll. The actual maximum will be `Max(maxRecordsPerPoll, Max(bufferSize, 1))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | no, default == 100                                                                                           |
+| `maxSavedParseExceptions`             | Integer        | When a parse exception occurs, Druid can keep track of the most recent parse exceptions. "maxSavedParseExceptions" limits how many exception instances will be saved. These saved exceptions will be made available after the task finishes in the [task completion report](../../ingestion/tasks.md#reports). Overridden if `reportParseExceptions` is set.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | no, default == 0                                                                                             |
+| `maxRecordsPerPoll`                   | Integer        | The maximum number of records/events to be fetched from buffer per poll. The actual maximum will be `Max(maxRecordsPerPoll, Max(bufferSize, 1))`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | no, default == 100                                                                                           |
+| `repartitionTransitionDuration`       | ISO8601 Period | When shards are split or merged, the supervisor will recompute shard -> task group mappings, and signal any running tasks created under the old mappings to stop early at (current time + `repartitionTransitionDuration`). Stopping the tasks early allows Druid to begin reading from the new shards more quickly. The repartition transition wait time controlled by this property gives the stream additional time to write records to the new shards after the split/merge, which helps avoid the issues with empty shard handling described at https://github.com/apache/druid/issues/7600.                                                                                                                                                                                                                                                                                                                                                                               | no, (default == PT2M)                                                                                        |
 
 #### IndexSpec
 
@@ -316,9 +316,9 @@ may cause some Kinesis messages to be skipped or to be read twice.
 `POST /druid/indexer/v1/supervisor/<supervisorId>/terminate` terminates a supervisor and causes all associated indexing
 tasks managed by this supervisor to immediately stop and begin
 publishing their segments. This supervisor will still exist in the metadata store and it's history may be retrieved
-with the supervisor history api, but will not be listed in the 'get supervisors' api response nor can it's configuration
+with the supervisor history API, but will not be listed in the 'get supervisors' API response nor can it's configuration
 or status report be retrieved. The only way this supervisor can start again is by submitting a functioning supervisor
-spec to the create api.
+spec to the create API.
 
 ### Capacity Planning
 
@@ -397,7 +397,7 @@ events for the interval 13:00 - 14:00 may be split across previous and new set o
 one can schedule re-indexing tasks be run to merge segments together into new segments of an ideal size (in the range of ~500-700 MB per segment).
 Details on how to optimize the segment size can be found on [Segment size optimization](../../operations/segment-optimization.md).
 There is also ongoing work to support automatic segment compaction of sharded segments as well as compaction not requiring
-Hadoop (see [here](https://github.com/apache/incubator-druid/pull/5102)).
+Hadoop (see [here](https://github.com/apache/druid/pull/5102)).
 
 ### Determining Fetch Settings
 Internally, the Kinesis Indexing Service uses the Kinesis Record Supplier abstraction for fetching Kinesis data records and storing the records
@@ -431,7 +431,7 @@ control this behavior. The number of records that the indexing task fetch from t
 determines the number of records to be processed per each ingestion loop in the task.
 
 ## Deaggregation
-See [issue](https://github.com/apache/incubator-druid/issues/6714)
+See [issue](https://github.com/apache/druid/issues/6714)
 
 The Kinesis indexing service supports de-aggregation of multiple rows packed into a single record by the Kinesis
 Producer Library's aggregate method for more efficient data transfer. Currently, enabling the de-aggregate functionality
@@ -440,3 +440,15 @@ compatible with Apache projects.
 
 To enable this feature, add the `amazon-kinesis-client` (tested on version `1.9.2`) jar file ([link](https://mvnrepository.com/artifact/com.amazonaws/amazon-kinesis-client/1.9.2)) under `dist/druid/extensions/druid-kinesis-indexing-service/`.
 Then when submitting a supervisor-spec, set `deaggregate` to true.
+
+## Resharding
+
+When changing the shard count for a Kinesis stream, there will be a window of time around the resharding operation with early shutdown of Kinesis ingestion tasks and possible task failures.
+
+The early shutdowns and task failures are expected, and they occur because the supervisor will update the shard -> task group mappings as shards are closed and fully read, to ensure that tasks are not running 
+with an assignment of closed shards that have been fully read and to ensure a balanced distribution of active shards across tasks. 
+
+This window with early task shutdowns and possible task failures will conclude when:
+- All closed shards have been fully read and the Kinesis ingestion tasks have published the data from those shards, committing the "closed" state to metadata storage
+- Any remaining tasks that had inactive shards in the assignment have been shutdown (these tasks would have been created before the closed shards were completely drained)
+
